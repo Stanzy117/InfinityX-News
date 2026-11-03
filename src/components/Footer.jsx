@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="brand footer-logo">
             <span className="brand-mark">∞</span>
             <span>
-              INFINITY<span className="brand-red">X</span>
+              TEAM<span className="brand-red">SSDI</span>
               <small>NEWSROOM</small>
             </span>
           </div>
@@ -25,17 +25,10 @@ export default function Footer() {
         <div className="footer-note">
           <strong>Stay curious.</strong>
           <p>Clear reporting starts with asking better questions.</p>
-          <a
-            href="https://infinityx-news.base44.app/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Inspired by InfinityX News <ArrowUpRight size={15} />
-          </a>
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© {new Date().getFullYear()} InfinityX News Portal</span>
+        <span>© {new Date().getFullYear()} Team SSD News Portal</span>
         <span>
           Independent React project · News sources retain their rights
         </span>
