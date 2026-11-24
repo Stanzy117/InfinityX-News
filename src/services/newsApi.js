@@ -1,10 +1,8 @@
 import { demoArticles } from "../data/demoArticles";
 
-const API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
-const API_BASE = "https://gnews.io/api/v4";
-
-function mapArticle(article, index = 0) {
+function mapArticle(article) {
   const title = article.title || "Untitled story";
+
   return {
     id: `${slugify(title)}-${slugify(article.url || title)}`,
     title,
@@ -21,6 +19,7 @@ function mapArticle(article, index = 0) {
     url: article.url || "#",
   };
 }
+
 function slugify(text) {
   return text
     .toLowerCase()
@@ -30,56 +29,37 @@ function slugify(text) {
 }
 
 export async function getTopHeadlines({ category = "", query = "" } = {}) {
-  if (!API_KEY) {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    let items = demoArticles;
-    if (category && category !== "All")
-      items = items.filter((a) => a.category === category);
-    if (query)
-      items = items.filter((a) =>
-        `${a.title} ${a.description} ${a.category}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-      );
-    return { articles: items, demo: true };
+  const params = new URLSearchParams();
+
+  if (query) params.set("query", query);
+  if (category && category !== "All") {
+    params.set("category", category.toLowerCase());
   }
 
-  const params = new URLSearchParams({
-    lang: "en",
-    max: "10",
-    apikey: API_KEY,
-  });
-  if (query) params.set("q", query);
-  else if (category && category !== "All")
-    params.set("topic", category.toLowerCase());
-  else params.set("country", "us");
+  const response = await fetch(
+    `/.netlify/functions/news?${params.toString()}`
+  );
 
-  const response = await fetch(`${API_BASE}/top-headlines?${params}`);
   if (!response.ok) {
-    const message =
-      response.status === 401
-        ? "The news API key was rejected. Check VITE_GNEWS_API_KEY in your .env file."
-        : `News service returned ${response.status}. Please try again.`;
-    throw new Error(message);
+    const data = await response.json().catch(() => ({}));
+
+    throw new Error(
+      data.error || `News service returned ${response.status}. Please try again.`
+    );
   }
+
   const data = await response.json();
   const articles = (data.articles || []).map(mapArticle);
 
-const saved = JSON.parse(
-  sessionStorage.getItem("savedArticles") || "[]"
-);
+  const combined = [...articles, ...demoArticles];
 
-const updated = [...articles, ...saved].filter(
-  (article, index, all) =>
-    all.findIndex((item) => item.id === article.id) === index
-);
-
-sessionStorage.setItem(
-  "savedArticles",
-  JSON.stringify(updated)
-);
-
-return { articles, demo: false };
+  return {
+    articles: combined.filter(
+      (article, index, all) =>
+        all.findIndex((item) => item.id === article.id) === index
+    ),
+    demo: false,
+  };
 }
 
 export async function getArticleById(id) {
