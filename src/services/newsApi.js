@@ -37,8 +37,8 @@ export async function getTopHeadlines({ category = "", query = "" } = {}) {
   }
 
   const response = await fetch(
-    `/.netlify/functions/news?${params.toString()}`
-  );
+  `https://infinityx-news-nlro.netlify.app/.netlify/functions/news?${params.toString()}`
+);
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
