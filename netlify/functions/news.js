@@ -1,11 +1,47 @@
+const allowedOrigins = new Set([
+  "https://stanzy117.github.io",
+  "https://infinityx-news-nlro.netlify.app",
+]);
+
+function getCorsHeaders(origin) {
+  return {
+    ...(allowedOrigins.has(origin)
+      ? { "Access-Control-Allow-Origin": origin }
+      : {}),
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
+  };
+}
+
+function jsonResponse(body, status = 200, origin = "") {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...getCorsHeaders(origin),
+    },
+  });
+}
+
 export default async (request) => {
+  const origin = request.headers.get("Origin") || "";
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: getCorsHeaders(origin),
+    });
+  }
+
   try {
     const API_KEY = process.env.GNEWS_API_KEY;
 
     if (!API_KEY) {
-      return Response.json(
+      return jsonResponse(
         { error: "News API key is missing on the server." },
-        { status: 500 }
+        500,
+        origin
       );
     }
 
@@ -48,17 +84,19 @@ export default async (request) => {
     const data = await response.json();
 
     if (!response.ok) {
-      return Response.json(
+      return jsonResponse(
         { error: data.errors?.[0] || "Unable to retrieve news." },
-        { status: response.status }
+        response.status,
+        origin
       );
     }
 
-    return Response.json(data);
+    return jsonResponse(data, 200, origin);
   } catch (error) {
-    return Response.json(
+    return jsonResponse(
       { error: "News service is temporarily unavailable." },
-      { status: 500 }
+      500,
+      origin
     );
   }
 };
